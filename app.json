@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "Royal Notes",
+    "slug": "royal-notes",
+    "version": "1.0.0",
+    "scheme": "royalnotes",
+    "runtimeVersion": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.royalnotes.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Royal Notes needs camera access to scan documents.",
+        "NSPhotoLibraryUsageDescription": "Royal Notes needs photo library access to upload images for OCR and custom wallpapers.",
+        "NSPhotoLibraryAddUsageDescription": "Royal Notes needs permission to save images."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1B2A"
+      },
+      "package": "com.royalnotes.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Royal Notes needs access to your photos to set note wallpapers and scan documents.",
+          "cameraPermission": "Royal Notes needs camera access to scan documents."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0D1B2A"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 24
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "37b9d060-a0ac-4c55-97e6-2c1aa5fe61db"
+      }
+    }
+  }
+}

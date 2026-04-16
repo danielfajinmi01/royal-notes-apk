@@ -1,0 +1,12 @@
+node_modules
+.expo
+dist
+dist-check
+.DS_Store
+.vscode
+Note Pad app with UI features/
+royal-notes 1.1.0/
+RoyalNotes/node_modules
+RoyalNotes/.expo
+RoyalNotes/dist
+RoyalNotes/
