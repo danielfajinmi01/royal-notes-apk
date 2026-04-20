@@ -9,8 +9,9 @@ import {
   Alert,
   Image,
   Modal,
-  ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -31,22 +32,122 @@ function getEditorHtml(editorBackground, textColor, content) {
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
   <style>
+    :root {
+      --toolbar-height: 58px;
+      --keyboard-offset: 0px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100vh; background: ${editorBackground}; }
-    body { color: ${textColor}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
+    body { color: ${textColor}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; position: relative; }
+    #editor-shell { height: 100vh; padding-bottom: calc(var(--toolbar-height) + var(--keyboard-offset)); }
     #editor { background: transparent; }
-    .ql-toolbar.ql-snow { background: rgba(0, 0, 0, 0.22); border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 10px; }
-    .ql-toolbar .ql-stroke { stroke: ${textColor}; }
-    .ql-toolbar .ql-fill { fill: ${textColor}; }
-    .ql-toolbar .ql-picker { color: ${textColor}; }
-    .ql-container.ql-snow { border: none; font-size: 16px; height: calc(100vh - 56px); background: transparent; }
-    .ql-editor { min-height: 300px; padding: 24px 18px 140px; line-height: 1.78; color: ${textColor}; background: transparent; }
+    .ql-toolbar.ql-snow {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--keyboard-offset);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 54px;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      background: rgba(0, 0, 0, 0.96);
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0;
+      box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.22);
+      overflow-x: auto;
+      overflow-y: visible;
+      white-space: nowrap;
+      z-index: 20;
+      -webkit-overflow-scrolling: touch;
+    }
+    .ql-toolbar.ql-snow::-webkit-scrollbar { display: none; }
+    .ql-toolbar.ql-snow .ql-formats { margin-right: 10px; }
+    .ql-toolbar.ql-snow button,
+    .ql-toolbar.ql-snow .ql-picker-label {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+    .ql-toolbar.ql-snow .ql-picker.ql-header {
+      min-width: 132px;
+      margin-right: 8px;
+    }
+    .ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 0 30px 0 10px;
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .ql-toolbar .ql-stroke { stroke: #FFFFFF; }
+    .ql-toolbar .ql-fill { fill: #FFFFFF; }
+    .ql-toolbar .ql-picker { color: #FFFFFF; }
+    .ql-toolbar .ql-picker-options {
+      left: 0;
+      right: auto;
+      min-width: 188px;
+      padding: 8px 0;
+      background: #000000;
+      border: 1px solid #000000;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+    }
+    .ql-toolbar .ql-picker-item,
+    .ql-toolbar .ql-picker-label::before,
+    .ql-toolbar .ql-picker-item::before {
+      color: #FFFFFF;
+    }
+    .ql-toolbar .ql-picker.ql-expanded .ql-picker-label {
+      border-color: #FFFFFF;
+      background: #000000;
+      color: #FFFFFF;
+    }
+    .ql-toolbar .ql-picker-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      background: #000000;
+    }
+    .ql-toolbar .ql-picker-item:hover,
+    .ql-toolbar .ql-picker-item.ql-selected {
+      background: #111111;
+    }
+    .ql-toolbar .ql-picker.ql-header .ql-picker-label[data-value="1"]::before,
+    .ql-toolbar .ql-picker.ql-header .ql-picker-item[data-value="1"]::before {
+      content: "Heading 1";
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .ql-toolbar .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+    .ql-toolbar .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+      content: "Heading 2";
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .ql-toolbar .ql-picker.ql-header .ql-picker-label:not([data-value])::before,
+    .ql-toolbar .ql-picker.ql-header .ql-picker-item[data-value="false"]::before {
+      content: "Normal";
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .ql-container.ql-snow { border: none; font-size: 16px; height: 100%; background: transparent; }
+    .ql-editor { min-height: 100%; padding: 24px 18px 24px; line-height: 1.78; color: ${textColor}; background: transparent; }
     .ql-editor.ql-blank::before { color: ${textColor === '#FFFFFF' ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.28)'}; font-style: italic; left: 18px; }
     .ql-editor h1, .ql-editor h2, .ql-editor p, .ql-editor li { color: ${textColor}; }
   </style>
 </head>
 <body>
-  <div id="editor">${content || ''}</div>
+  <div id="editor-shell">
+    <div id="editor">${content || ''}</div>
+  </div>
   <script>
     var quill = new Quill('#editor', {
       theme: 'snow',
@@ -60,6 +161,26 @@ function getEditorHtml(editorBackground, textColor, content) {
         ]
       }
     });
+    var toolbar = quill.getModule('toolbar').container;
+    document.body.appendChild(toolbar);
+
+    function syncViewportInsets() {
+      var toolbarHeight = toolbar ? toolbar.offsetHeight : 58;
+      var viewport = window.visualViewport;
+      var keyboardOffset = 0;
+      if (viewport) {
+        keyboardOffset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      }
+      document.documentElement.style.setProperty('--toolbar-height', toolbarHeight + 'px');
+      document.documentElement.style.setProperty('--keyboard-offset', keyboardOffset + 'px');
+    }
+
+    syncViewportInsets();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncViewportInsets);
+      window.visualViewport.addEventListener('scroll', syncViewportInsets);
+    }
+    window.addEventListener('resize', syncViewportInsets);
 
     quill.on('text-change', function() {
       window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -237,54 +358,55 @@ export default function NoteEditorScreen({ route, navigation }) {
       {wallpaperUri ? <View style={[StyleSheet.absoluteFill, getWallpaperOverlayStyle(true)]} /> : null}
 
       <SafeAreaView style={styles.safe}>
-        <View style={styles.topPanel}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
-          >
-            <Feather name="chevron-left" size={20} color={textColor} />
-          </TouchableOpacity>
-
-          <View style={styles.topPanelCopy}>
-            <Text style={[styles.editorLabel, { color: hexAlpha(textColor, 0.72) }]}>NOTE EDITOR</Text>
-            <TextInput
-              style={[styles.titleInput, { color: textColor }]}
-              placeholder="Note title..."
-              placeholderTextColor={hexAlpha(textColor, 0.45)}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={() => setIsFavorite(current => !current)}
-            style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
-          >
-            <Feather name="star" size={18} color={isFavorite ? '#C9A84C' : textColor} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setThemeVisible(true)}
-            style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
-          >
-            <Feather name="image" size={18} color={textColor} />
-          </TouchableOpacity>
-
-          <Animated.View style={{ transform: [{ scale: saveAnim }] }}>
-            <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveBtn}>
-              <Text style={styles.saveBtnText}>{saving ? '...' : 'Save'}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.editorScroll}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.content}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.metaPanel}>
-            <Text style={[styles.metaLabel, { color: hexAlpha(textColor, 0.72) }]}>TAGS</Text>
-            <TagInput tags={tags} setTags={setTags} textColor={textColor} />
+          <View style={styles.contentInset}>
+            <View style={styles.topPanel}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
+              >
+                <Feather name="chevron-left" size={20} color={textColor} />
+              </TouchableOpacity>
+
+              <View style={styles.topPanelCopy}>
+                <Text style={[styles.editorLabel, { color: hexAlpha(textColor, 0.72) }]}>NOTE EDITOR</Text>
+                <TextInput
+                  style={[styles.titleInput, { color: textColor }]}
+                  placeholder="Note title..."
+                  placeholderTextColor={hexAlpha(textColor, 0.45)}
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setIsFavorite(current => !current)}
+                style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
+              >
+                <Feather name="star" size={18} color={isFavorite ? '#C9A84C' : textColor} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setThemeVisible(true)}
+                style={[styles.iconBtn, { backgroundColor: hexAlpha(textColor, 0.08) }]}
+              >
+                <Feather name="image" size={18} color={textColor} />
+              </TouchableOpacity>
+
+              <Animated.View style={{ transform: [{ scale: saveAnim }] }}>
+                <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveBtn}>
+                  <Text style={styles.saveBtnText}>{saving ? '...' : 'Save'}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+
+            <View style={styles.metaPanel}>
+              <Text style={[styles.metaLabel, { color: hexAlpha(textColor, 0.72) }]}>TAGS</Text>
+              <TagInput tags={tags} setTags={setTags} textColor={textColor} />
+            </View>
           </View>
 
           <View style={styles.editorFrame}>
@@ -307,7 +429,7 @@ export default function NoteEditorScreen({ route, navigation }) {
               hideKeyboardAccessoryView
             />
           </View>
-        </ScrollView>
+        </KeyboardAvoidingView>
 
         <BottomNavigation
           colors={colors}
@@ -334,7 +456,9 @@ export default function NoteEditorScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  safe: { flex: 1, paddingHorizontal: UI_SPACING.lg, paddingBottom: UI_SPACING.lg },
+  safe: { flex: 1, paddingBottom: UI_SPACING.lg },
+  content: { flex: 1 },
+  contentInset: { paddingHorizontal: UI_SPACING.lg },
   topPanel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,7 +490,6 @@ const styles = StyleSheet.create({
     borderRadius: UI_RADIUS.round,
   },
   saveBtnText: { color: '#0B0C0F', fontWeight: '700', fontSize: 14 },
-  editorScroll: { paddingBottom: UI_SPACING.md, gap: UI_SPACING.md },
   metaPanel: {
     borderRadius: UI_RADIUS.lg,
     padding: UI_SPACING.md,
@@ -391,12 +514,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   editorFrame: {
-    minHeight: 520,
+    flex: 1,
     overflow: 'hidden',
-    borderRadius: UI_RADIUS.lg,
     backgroundColor: 'transparent',
+    marginTop: UI_SPACING.sm,
   },
-  webview: { flex: 1, minHeight: 520, backgroundColor: 'transparent' },
+  webview: { flex: 1, backgroundColor: 'transparent' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.58)' },
   modalSheet: {
     borderTopLeftRadius: UI_RADIUS.xl,
