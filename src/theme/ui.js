@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { hexAlpha } from '../utils/colorUtils';
 
 export const UI_FONTS = {
-  serif: 'Poppins',
+  serif: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   sans: Platform.OS === 'ios' ? 'System' : 'sans-serif',
 };
 

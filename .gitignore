@@ -6,6 +6,8 @@ dist-check
 .vscode
 Note Pad app with UI features/
 royal-notes 1.1.0/
+android/
+ios/
 RoyalNotes/node_modules
 RoyalNotes/.expo
 RoyalNotes/dist

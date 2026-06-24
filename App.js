@@ -1,5 +1,7 @@
+import 'react-native-gesture-handler';
+
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, View, Text, StyleSheet } from 'react-native';
+import { Animated, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -13,15 +15,45 @@ import TodoScreen from './src/screens/TodoScreen';
 
 const Stack = createNativeStackNavigator();
 
-function NoteEditorScreenWrapper(props) {
-  const Screen = require('./src/screens/NoteEditorScreen').default;
-  return <Screen {...props} />;
+function NativeModuleFallback({ navigation, title, error }) {
+  const { colors, isDark } = useTheme();
+
+  return (
+    <View style={[styles.fallbackScreen, { backgroundColor: isDark ? '#050505' : '#F6F2E8' }]}>
+      <View style={[styles.fallbackCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[styles.fallbackEyebrow, { color: colors.accent }]}>SCREEN UNAVAILABLE</Text>
+        <Text style={[styles.fallbackTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.fallbackBody, { color: colors.subtext }]}>
+          This screen depends on native modules that are not available in the installed app build yet.
+          Rebuild or reinstall the Android app after dependency changes, then try again.
+        </Text>
+        {error ? (
+          <Text style={[styles.fallbackError, { color: colors.subtext }]}>
+            {String(error.message || error)}
+          </Text>
+        ) : null}
+        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.fallbackButton}>
+          <Text style={styles.fallbackButtonText}>Back to Home</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
-function OCRScreenWrapper(props) {
-  const Screen = require('./src/screens/OCRScreen').default;
-  return <Screen {...props} />;
+function createSafeLazyScreen(loader, title) {
+  return function SafeLazyScreen(props) {
+    try {
+      const Screen = loader().default;
+      return <Screen {...props} />;
+    } catch (error) {
+      console.error(`${title} failed to load`, error);
+      return <NativeModuleFallback navigation={props.navigation} title={title} error={error} />;
+    }
+  };
 }
+
+const NoteEditorScreenWrapper = createSafeLazyScreen(() => require('./src/screens/NoteEditorScreen'), 'Note Editor');
+const OCRScreenWrapper = createSafeLazyScreen(() => require('./src/screens/OCRScreen'), 'Scanner');
 
 function AppNavigator() {
   const { isDark } = useTheme();
@@ -136,5 +168,52 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginTop: 8,
     fontFamily: 'serif',
+  },
+  fallbackScreen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  fallbackCard: {
+    width: '100%',
+    maxWidth: 460,
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 24,
+  },
+  fallbackEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.8,
+    marginBottom: 10,
+  },
+  fallbackTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 10,
+    fontFamily: 'serif',
+  },
+  fallbackBody: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  fallbackError: {
+    marginTop: 14,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  fallbackButton: {
+    marginTop: 22,
+    alignSelf: 'flex-start',
+    backgroundColor: '#C9A84C',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  fallbackButtonText: {
+    color: '#0B0C0F',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

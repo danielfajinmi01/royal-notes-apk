@@ -33,7 +33,7 @@ function getEditorHtml(editorBackground, textColor, content) {
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
   <style>
     :root {
-      --toolbar-height: 58px;
+      --toolbar-height: 40px;
       --keyboard-offset: 0px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,54 +48,68 @@ function getEditorHtml(editorBackground, textColor, content) {
       bottom: var(--keyboard-offset);
       display: flex;
       align-items: center;
-      gap: 4px;
-      min-height: 54px;
-      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      gap: 2px;
+      min-height: 40px;
+      padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
       background: rgba(0, 0, 0, 0.96);
       border: none;
       border-top: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 0;
       box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.22);
-      overflow-x: auto;
-      overflow-y: visible;
+      overflow: visible;
       white-space: nowrap;
       z-index: 20;
       -webkit-overflow-scrolling: touch;
     }
     .ql-toolbar.ql-snow::-webkit-scrollbar { display: none; }
-    .ql-toolbar.ql-snow .ql-formats { margin-right: 10px; }
+    .ql-toolbar.ql-snow .ql-formats { display: inline-flex; align-items: center; margin-right: 6px; position: relative; }
+    .ql-toolbar .ql-picker { position: relative; color: #FFFFFF; }
     .ql-toolbar.ql-snow button,
     .ql-toolbar.ql-snow .ql-picker-label {
-      width: 34px;
-      height: 34px;
+      width: 26px;
+      height: 26px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 8px;
     }
     .ql-toolbar.ql-snow .ql-picker.ql-header {
-      min-width: 132px;
-      margin-right: 8px;
+      min-width: 96px;
+      margin-right: 6px;
     }
     .ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label {
       width: 100%;
       justify-content: flex-start;
-      padding: 0 30px 0 10px;
+      padding: 0 24px 0 8px;
       color: #FFFFFF;
       border: 1px solid rgba(255, 255, 255, 0.16);
       background: rgba(255, 255, 255, 0.08);
     }
+    .ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label::before {
+      font-size: 12px;
+    }
     .ql-toolbar .ql-stroke { stroke: #FFFFFF; }
     .ql-toolbar .ql-fill { fill: #FFFFFF; }
-    .ql-toolbar .ql-picker { color: #FFFFFF; }
     .ql-toolbar .ql-picker-options {
       left: 0;
       right: auto;
+      top: auto;
+      bottom: calc(100% + 8px);
       min-width: 188px;
       padding: 8px 0;
       background: #000000;
       border: 1px solid #000000;
       box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+      transform: translateY(-6px);
+      z-index: 30;
+    }
+    .ql-toolbar .ql-picker.ql-expanded .ql-picker-options {
+      top: auto !important;
+      bottom: calc(100% + 8px) !important;
+      display: block;
     }
     .ql-toolbar .ql-picker-item,
     .ql-toolbar .ql-picker-label::before,
@@ -145,6 +159,32 @@ function getEditorHtml(editorBackground, textColor, content) {
   </style>
 </head>
 <body>
+  <div id="toolbar">
+    <span class="ql-formats">
+      <select class="ql-header">
+        <option selected></option>
+        <option value="1"></option>
+        <option value="2"></option>
+      </select>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-bold"></button>
+      <button class="ql-italic"></button>
+      <button class="ql-underline"></button>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-align"></button>
+      <button class="ql-align" value="center"></button>
+      <button class="ql-align" value="right"></button>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-list" value="ordered"></button>
+      <button class="ql-list" value="bullet"></button>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-clean"></button>
+    </span>
+  </div>
   <div id="editor-shell">
     <div id="editor">${content || ''}</div>
   </div>
@@ -153,19 +193,13 @@ function getEditorHtml(editorBackground, textColor, content) {
       theme: 'snow',
       placeholder: 'Begin your royal story...',
       modules: {
-        toolbar: [
-          [{ header: [1, 2, false] }],
-          ['bold', 'italic', 'underline'],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          ['clean']
-        ]
+        toolbar: '#toolbar'
       }
     });
-    var toolbar = quill.getModule('toolbar').container;
-    document.body.appendChild(toolbar);
+    var toolbar = document.getElementById('toolbar');
 
     function syncViewportInsets() {
-      var toolbarHeight = toolbar ? toolbar.offsetHeight : 58;
+      var toolbarHeight = toolbar ? toolbar.offsetHeight : 40;
       var viewport = window.visualViewport;
       var keyboardOffset = 0;
       if (viewport) {
