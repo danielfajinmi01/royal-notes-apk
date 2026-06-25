@@ -160,14 +160,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     letterSpacing: 2,
     marginTop: 20,
-    fontFamily: 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   tagline: {
     color: '#9A9A9A',
     fontSize: 13,
     letterSpacing: 1.5,
     marginTop: 8,
-    fontFamily: 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   fallbackScreen: {
     flex: 1,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 10,
-    fontFamily: 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   fallbackBody: {
     fontSize: 14,

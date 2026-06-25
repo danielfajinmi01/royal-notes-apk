@@ -28,6 +28,8 @@
       "package": "com.royalnotes.app",
       "permissions": [
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -63,6 +65,9 @@
       "eas": {
         "projectId": "37b9d060-a0ac-4c55-97e6-2c1aa5fe61db"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/37b9d060-a0ac-4c55-97e6-2c1aa5fe61db"
     }
   }
 }
