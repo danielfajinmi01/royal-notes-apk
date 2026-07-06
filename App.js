@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { Video, ResizeMode } from 'expo-av';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import HomeScreen from './src/screens/HomeScreen';
@@ -76,41 +77,38 @@ function AppNavigator() {
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(1)).current;
   const mainFade = useRef(new Animated.Value(0)).current;
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
+    
+    // Fallback in case video fails to load or play
+    const fallbackTimer = setTimeout(() => {
+      if (!finishedRef.current) {
+        handleVideoFinish();
+      }
+    }, 5000);
+    
+    return () => clearTimeout(fallbackTimer);
+  }, []);
 
-    const looping = Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(pulseAnim, { toValue: 0.92, duration: 800, useNativeDriver: true }),
-          Animated.timing(opacityAnim, { toValue: 0.75, duration: 800, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(pulseAnim, { toValue: 1.08, duration: 800, useNativeDriver: true }),
-          Animated.timing(opacityAnim, { toValue: 1.0, duration: 800, useNativeDriver: true }),
-        ]),
-      ])
-    );
+  const handleVideoFinish = () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    Animated.timing(mainFade, { toValue: 1, duration: 600, useNativeDriver: true }).start(() => {
+      setIsLoading(false);
+    });
+  };
 
-    looping.start();
-
-    const timer = setTimeout(() => {
-      Animated.timing(mainFade, { toValue: 1, duration: 600, useNativeDriver: true }).start(() => {
-        setIsLoading(false);
-        looping.stop();
-      });
-    }, 1400);
-
-    return () => {
-      clearTimeout(timer);
-      looping.stop();
-    };
-  }, [mainFade, opacityAnim, pulseAnim]);
+  const onPlaybackStatusUpdate = (status) => {
+    if (status.didJustFinish) {
+      handleVideoFinish();
+    }
+    if (status.error) {
+      handleVideoFinish();
+    }
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -122,16 +120,15 @@ export default function App() {
 
           {isLoading && (
             <View style={styles.splashContainer}>
-              <Animated.Image
-                source={require('./assets/icon.png')}
-                style={[
-                  styles.logo,
-                  { transform: [{ scale: pulseAnim }], opacity: opacityAnim },
-                ]}
-                resizeMode="contain"
+              <Video
+                source={require('./assets/Can_you_make_motion_graphics_f.mp4')}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode={ResizeMode.COVER}
+                shouldPlay
+                isMuted
+                onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+                onError={() => handleVideoFinish()}
               />
-              <Text style={styles.title}>Royal Notes</Text>
-              <Text style={styles.tagline}>Your ideas deserve a throne.</Text>
             </View>
           )}
         </View>

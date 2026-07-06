@@ -17,6 +17,7 @@
     "@react-navigation/native-stack": "^6.9.26",
     "babel-preset-expo": "~55.0.19",
     "expo": "~55.0.26",
+    "expo-av": "^16.0.8",
     "expo-build-properties": "~55.0.14",
     "expo-camera": "~55.0.19",
     "expo-image-manipulator": "~55.0.17",
